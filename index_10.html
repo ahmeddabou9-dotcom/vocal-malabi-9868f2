@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>نظام تقييم الحرفيين — Desert Zone × الغرفة</title>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --c-bg:       #f8f7f4;
+  --c-surface:  #ffffff;
+  --c-border:   rgba(0,0,0,0.10);
+  --c-text:     #1a1a18;
+  --c-muted:    #6b6b66;
+  --c-teal:     #1D9E75;
+  --c-teal-bg:  #E1F5EE;
+  --c-purple:   #534AB7;
+  --c-purple-bg:#EEEDFE;
+  --c-amber:    #BA7517;
+  --c-amber-bg: #FAEEDA;
+  --c-coral:    #993C1D;
+  --c-coral-bg: #FAECE7;
+  --c-blue:     #185FA5;
+  --c-blue-bg:  #E6F1FB;
+  --radius:     10px;
+  --shadow:     0 1px 4px rgba(0,0,0,0.08);
+}
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ===== Layout ===== */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  background: var(--c-surface);
+  border-left: 1px solid var(--c-border);
+  padding: 24px 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-logo {
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: 16px;
+}
+.sidebar-logo h2 { font-size: 14px; font-weight: 600; color: var(--c-text); }
+.sidebar-logo p  { font-size: 11px; color: var(--c-muted); margin-top: 2px; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 0;
+  color: var(--c-muted);
+  font-size: 13px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: right;
+  transition: all 0.15s;
+}
+.nav-item:hover  { background: var(--c-bg); color: var(--c-text); }
+.nav-item.active { background: var(--c-teal-bg); color: var(--c-teal); font-weight: 500; }
+.nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+.nav-badge {
+  margin-right: auto;
+  background: #E24B4A;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.main { margin-right: 220px; flex: 1; padding: 28px; max-width: 100%; }
+
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-size: 20px; font-weight: 600; }
+.page-header p  { color: var(--c-muted); font-size: 13px; margin-top: 4px; }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+}
+
+/* ===== KPI Grid ===== */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.kpi-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+.kpi-label { font-size: 11px; color: var(--c-muted); font-weight: 500; margin-bottom: 6px; }
+.kpi-value { font-size: 28px; font-weight: 600; line-height: 1; }
+.kpi-sub   { font-size: 11px; color: var(--c-muted); margin-top: 4px; }
+.kpi-teal   .kpi-value { color: var(--c-teal); }
+.kpi-amber  .kpi-value { color: var(--c-amber); }
+.kpi-coral  .kpi-value { color: var(--c-coral); }
+.kpi-blue   .kpi-value { color: var(--c-blue); }
+
+/* ===== Charts Row ===== */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-wrap { position: relative; height: 260px; }
+
+/* ===== Table ===== */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: var(--c-bg);
+  padding: 10px 14px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--c-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--c-border);
+  white-space: nowrap;
+}
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--c-border);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--c-bg); }
+
+/* ===== Badges ===== */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.badge-accepted    { background: var(--c-teal-bg);   color: var(--c-teal); }
+.badge-rejected    { background: var(--c-coral-bg);  color: var(--c-coral); }
+.badge-conditional { background: var(--c-amber-bg);  color: var(--c-amber); }
+
+/* ===== Score Bar ===== */
+.score-bar { display: flex; align-items: center; gap: 8px; }
+.score-track {
+  flex: 1;
+  height: 6px;
+  background: var(--c-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.score-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.score-num  { font-size: 12px; font-weight: 500; min-width: 26px; text-align: left; }
+
+/* ===== Form ===== */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-full { grid-column: 1 / -1; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+label { font-size: 12px; font-weight: 500; color: var(--c-muted); }
+input, select, textarea {
+  padding: 9px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--c-teal);
+  box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
+}
+textarea { resize: vertical; min-height: 80px; }
+
+/* ===== Slider Score Input ===== */
+.score-input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+.score-input-group { display: flex; flex-direction: column; gap: 8px; }
+.score-input-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.score-input-label span { font-size: 12px; font-weight: 500; color: var(--c-muted); }
+.score-input-label strong { font-size: 18px; font-weight: 600; color: var(--c-teal); }
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--c-border);
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--c-teal);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* ===== Buttons ===== */
+.btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.btn:hover { background: var(--c-bg); }
+.btn-primary {
+  background: var(--c-teal);
+  color: white;
+  border-color: var(--c-teal);
+}
+.btn-primary:hover { background: #0F6E56; border-color: #0F6E56; }
+.btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* ===== Filters Bar ===== */
+.filters-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.filters-bar select, .filters-bar input { min-width: 140px; }
+
+/* ===== Alert Item ===== */
+.alert-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.alert-item.warning { background: var(--c-amber-bg); border: 1px solid rgba(186,117,23,0.2); }
+.alert-item.danger  { background: var(--c-coral-bg);  border: 1px solid rgba(153,60,29,0.2); }
+.alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert-text strong { display: block; font-size: 12px; font-weight: 600; margin-bottom: 2px; }
+.alert-text p { font-size: 12px; color: var(--c-muted); }
+
+/* ===== Radar Chart Container ===== */
+.radar-container { position: relative; height: 260px; display: flex; justify-content: center; }
+
+/* ===== Login ===== */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-bg);
+}
+.login-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  padding: 36px 32px;
+  width: 360px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+.login-card h1 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+.login-card p  { color: var(--c-muted); font-size: 13px; margin-bottom: 24px; }
+.login-card .form-group { margin-bottom: 14px; }
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--c-text);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+.toast.success { background: var(--c-teal); }
+.toast.error   { background: var(--c-coral); }
+
+/* ===== Pagination ===== */
+.pagination { display: flex; gap: 6px; justify-content: flex-end; margin-top: 14px; }
+.page-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  background: var(--c-surface);
+  font-size: 12px;
+  cursor: pointer;
+}
+.page-btn.active { background: var(--c-teal); color: white; border-color: var(--c-teal); }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== Mobile Topbar ===== */
+.mobile-topbar {
+  display: none;
+  position: fixed;
+  top: 0; right: 0; left: 0;
+  height: 56px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  z-index: 200;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+}
+.mobile-topbar-title { font-size: 14px; font-weight: 600; flex: 1; }
+.mobile-topbar-code {
+  font-size: 10px;
+  background: var(--c-teal-bg);
+  color: var(--c-teal);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.mobile-topbar .btn-logout {
+  font-size: 12px;
+  padding: 5px 10px;
+  color: var(--c-coral);
+  border-color: var(--c-coral-bg);
+  background: var(--c-coral-bg);
+}
+
+/* ===== Mobile Bottom Nav ===== */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; right: 0; left: 0;
+  height: 62px;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  z-index: 200;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.mobile-bottom-nav::-webkit-scrollbar { display: none; }
+.mobile-nav-inner {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  min-width: max-content;
+  padding: 0 4px;
+}
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 14px;
+  cursor: pointer;
+  color: var(--c-muted);
+  border: none;
+  background: none;
+  font-family: inherit;
+  min-width: 60px;
+  position: relative;
+  transition: color .15s;
+}
+.mobile-nav-item.active { color: var(--c-teal); }
+.mobile-nav-item .m-icon { font-size: 18px; line-height: 1; }
+.mobile-nav-item .m-label { font-size: 10px; font-weight: 500; white-space: nowrap; }
+.mobile-nav-item .m-badge {
+  position: absolute;
+  top: 8px; left: 10px;
+  background: #E24B4A;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  /* Hide sidebar, show mobile nav */
+  .sidebar { display: none !important; }
+  .mobile-topbar { display: flex; }
+  .mobile-bottom-nav { display: block; }
+
+  /* Adjust main content */
+  .main {
+    margin-right: 0 !important;
+    padding: 16px 14px;
+    padding-top: 70px;   /* below topbar */
+    padding-bottom: 78px; /* above bottom nav */
+  }
+
+  /* KPI grid: 2 columns on mobile */
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-value { font-size: 22px; }
+
+  /* Charts: stack vertically */
+  .charts-row { grid-template-columns: 1fr; gap: 12px; }
+  .chart-wrap, .radar-container { height: 220px; }
+
+  /* Forms: single column */
+  .form-grid { grid-template-columns: 1fr; }
+  .form-full { grid-column: 1; }
+  .score-input-row { grid-template-columns: 1fr; }
+
+  /* Page header flex wrap */
+  .page-header[style*="justify-content:space-between"],
+  .page-header[style*="justify-content: space-between"] {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Login card: full width */
+  .login-card {
+    width: 100%;
+    margin: 16px;
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+
+  /* Table: smaller font */
+  table { font-size: 12px; }
+  th, td { padding: 8px 10px; }
+
+  /* Cards: less padding */
+  .card { padding: 14px; }
+  .kpi-card { padding: 12px 14px; }
+
+  /* Filters bar: full width items */
+  .filters-bar { gap: 8px; }
+  .filters-bar select,
+  .filters-bar input { min-width: 0; flex: 1; width: 100%; }
+
+  /* Buttons row: stretch on mobile */
+  .btn-row { flex-direction: column-reverse; }
+  .btn-row .btn { width: 100%; text-align: center; padding: 12px; }
+
+  /* Score sliders: bigger touch targets */
+  input[type=range]::-webkit-slider-thumb { width: 24px; height: 24px; }
+  input[type=range] { height: 8px; }
+
+  /* Toast: full width bottom */
+  .toast {
+    bottom: 72px;
+    left: 16px;
+    right: 16px;
+    transform: none;
+    text-align: center;
+  }
+
+  /* Max width forms: remove on mobile */
+  .card[style*="max-width"] { max-width: none !important; }
+
+  /* Page title smaller */
+  .page-header h1 { font-size: 17px; }
+}
+
+@media (max-width: 380px) {
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-value { font-size: 20px; }
+  .main { padding: 12px 10px; padding-top: 68px; padding-bottom: 78px; }
+}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== State =====
+let state = {
+  page:        'login',
+  user:        null,
+  token:       localStorage.getItem('token'),
+  userName:    localStorage.getItem('userName'),
+  userRole:    localStorage.getItem('userRole'),
+  summary:     null,
+  trends:      [],
+  evaluations: [],
+  artisans:    [],
+  alerts:      [],
+  evalPage:    1,
+  evalTotal:   0,
+  filters:     { status: '', region_id: '', search: '' },
+  newEval:     {
+    artisan_id:'', product_id:'',
+    score_quality:7, score_supply:7, score_story:7, score_compliance:7,
+    status:'accepted', notes:'', rejection_reason:'', improvement_notes:'',
+  },
+  products:    [],
+  newProduct:  { artisan_id:'', name:'', category:'', price_dzd:'', description:'' },
+  evaluators_list: [],
+  demo_users:  [],
+  regions:     [],
+  specialties: [],
+  loading:     false,
+};
+
+// ===== API =====
+const API = 'http://localhost:3001/api';
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(state.token ? { Authorization: 'Bearer ' + state.token } : {}),
+      ...opts.headers,
+    },
+  });
+  if (!res.ok) throw new Error((await res.json()).error || 'خطأ في الاتصال');
+  return res.json();
+}
+
+// ===== Toast =====
+function toast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => { el.className = 'toast'; }, 3000);
+}
+
+// ===== Render =====
+function render() {
+  const root = document.getElementById('root');
+  if (!state.token) { root.innerHTML = renderLogin(); bindLogin(); return; }
+  root.innerHTML = renderApp();
+  bindNav();
+  renderActiveChart();
+}
+
+function renderLogin() {
+  return `
+<div class="login-wrap">
+  <div class="login-card">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="display:inline-block;background:var(--c-teal-bg);color:var(--c-teal);font-size:11px;font-weight:600;padding:4px 14px;border-radius:20px;letter-spacing:.06em;margin-bottom:10px">
+        CHAMBER-DZ-2025
+      </div>
+      <h1 style="font-size:17px">نظام تقييم الحرفيين</h1>
+      <p style="margin-top:4px">Desert Zone × غرفة الصناعة التقليدية</p>
+    </div>
+    <div class="form-group">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="l-email" placeholder="البريد الإلكتروني" dir="ltr"/>
+    </div>
+    <div class="form-group" style="margin-bottom:6px">
+      <label>كلمة المرور</label>
+      <input type="password" id="l-pass" placeholder="••••••••"/>
+    </div>
+    <div id="login-error" style="color:var(--c-coral);font-size:12px;min-height:18px;margin-bottom:10px;text-align:center"></div>
+    <button class="btn btn-primary" id="login-btn" style="width:100%">دخول</button>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--c-border)">
+      <p style="font-size:11px;color:var(--c-muted);margin-bottom:6px;text-align:center">حسابات العرض التوضيحي</p>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        ${(state.demo_users||[]).map(u=>`
+        <button class="btn" style="font-size:11px;padding:5px 10px;text-align:right;display:flex;justify-content:space-between"
+          onclick="document.getElementById('l-email').value='${u.email}';document.getElementById('l-pass').value='${u.password}'">
+          <span>${u.name}</span>
+          <span style="color:var(--c-muted)">${u.role==='admin'?'مدير':u.role==='evaluator'?'مقيّم':'شريك'}</span>
+        </button>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function bindLogin() {
+  document.getElementById('login-btn')?.addEventListener('click', async () => {
+    const email = document.getElementById('l-email').value.trim();
+    const pass  = document.getElementById('l-pass').value;
+    const errEl = document.getElementById('login-error');
+    if (!email || !pass) { errEl.textContent = 'أدخل البريد الإلكتروني وكلمة المرور'; return; }
+
+    // Try real API first
+    try {
+      const data = await api('/auth/login', { method:'POST', body: JSON.stringify({ email, password: pass }) });
+      state.token = data.token;
+      state.userName = data.name;
+      state.userRole = data.role;
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('userName', data.name);
+      localStorage.setItem('userRole', data.role);
+      state.page = 'dashboard';
+      await loadDashboardData();
+      render();
+      return;
+    } catch {}
+
+    // Demo mode: check against demo_users list
+    const match = state.demo_users.find(u => u.email === email && u.password === pass);
+    if (match) {
+      state.token    = 'demo-' + match.role;
+      state.userName = match.name;
+      state.userRole = match.role;
+      localStorage.setItem('token',    state.token);
+      localStorage.setItem('userName', match.name);
+      localStorage.setItem('userRole', match.role);
+      state.page = 'dashboard';
+      loadDemoData();
+      render();
+    } else {
+      errEl.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+    }
+  });
+  // Allow Enter key
+  document.getElementById('l-pass')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('login-btn').click();
+  });
+}
+
+// ===== Demo Data =====
+function loadDemoData() {
+  // Demo users (للعرض فقط — في الإنتاج كلمات المرور مشفّرة في MySQL)
+  if (!state.demo_users.length) {
+    state.demo_users = [
+      { id:1, name:'مدير الغرفة',       email:'ahmeddabou9@gmail.com',  password:'admin123',  role:'admin' },
+      { id:2, name:'سامية بن عيسى',     email:'samia@chamber.dz',       password:'eval2025',  role:'evaluator' },
+      { id:3, name:'كريم طالبي',        email:'karim@desertzone.dz',     password:'eval2025',  role:'evaluator' },
+      { id:4, name:'شريك Desert Zone',  email:'partner@desertzone.dz',   password:'partner25', role:'partner' },
+    ];
+  }
+  // Demo evaluators list
+  if (!state.evaluators_list.length) {
+    state.evaluators_list = [
+      { id:1, name:'سامية بن عيسى',  org:'chamber',     email:'samia@chamber.dz',     is_active:1, eval_count:18 },
+      { id:2, name:'كريم طالبي',     org:'desert_zone', email:'karim@desertzone.dz',   is_active:1, eval_count:14 },
+      { id:3, name:'نادية حمداني',   org:'chamber',     email:'nadia@chamber.dz',      is_active:1, eval_count:22 },
+    ];
+  }
+  state.summary = {
+    total_evaluations: 148,
+    accepted: 101,
+    rejected: 16,
+    conditional: 31,
+    acceptance_rate: 68.2,
+    avg_quality: 7.8,
+    avg_supply: 6.9,
+    avg_story: 8.1,
+    avg_compliance: 9.2,
+    avg_total: 8.0,
+    total_artisans: 34,
+    unresolved_alerts: 3,
+  };
+  state.trends = [
+    { month:'2024-10', acceptance_rate_pct:58, avg_quality:7.1, avg_supply:6.4, avg_story:7.6, avg_compliance:9.0 },
+    { month:'2024-11', acceptance_rate_pct:63, avg_quality:7.4, avg_supply:6.6, avg_story:7.8, avg_compliance:9.1 },
+    { month:'2024-12', acceptance_rate_pct:61, avg_quality:7.3, avg_supply:6.5, avg_story:7.9, avg_compliance:9.0 },
+    { month:'2025-01', acceptance_rate_pct:66, avg_quality:7.6, avg_supply:6.8, avg_story:8.0, avg_compliance:9.2 },
+    { month:'2025-02', acceptance_rate_pct:70, avg_quality:7.8, avg_supply:7.0, avg_story:8.2, avg_compliance:9.3 },
+    { month:'2025-03', acceptance_rate_pct:68, avg_quality:7.8, avg_supply:6.9, avg_story:8.1, avg_compliance:9.2 },
+  ];
+  state.evaluations = [
+    { eval_id:1, eval_date:'2025-03-15', artisan_name:'أحمد بن يوسف',   product_name:'زربية قبائلية تقليدية', region:'الجزائر العاصمة', total_score:8.6, status:'accepted',     score_quality:8.5, score_supply:7.0, score_story:9.0, score_compliance:10.0 },
+    { eval_id:2, eval_date:'2025-03-14', artisan_name:'فاطمة الزهراء',  product_name:'تطريز على قفطان',       region:'تيزي وزو',        total_score:7.3, status:'conditional',  score_quality:7.0, score_supply:6.5, score_story:7.5, score_compliance:8.0  },
+    { eval_id:3, eval_date:'2025-03-12', artisan_name:'يوسف منصور',     product_name:'حقيبة جلد مطرزة',      region:'تلمسان',          total_score:8.8, status:'accepted',     score_quality:9.0, score_supply:8.5, score_story:9.5, score_compliance:8.0  },
+    { eval_id:4, eval_date:'2025-03-10', artisan_name:'خديجة ورزاق',    product_name:'شمعدان نحاسي',         region:'غرداية',          total_score:6.9, status:'conditional',  score_quality:6.0, score_supply:5.5, score_story:7.0, score_compliance:9.0  },
+    { eval_id:5, eval_date:'2025-03-08', artisan_name:'علي تامزالي',    product_name:'طاجين خزفي',           region:'بجاية',           total_score:5.4, status:'rejected',     score_quality:5.5, score_supply:6.0, score_story:6.5, score_compliance:3.5  },
+    { eval_id:6, eval_date:'2025-03-05', artisan_name:'سارة حمداني',    product_name:'زربية بالصوف الطبيعي', region:'الجزائر العاصمة', total_score:9.1, status:'accepted',     score_quality:9.5, score_supply:9.0, score_story:9.0, score_compliance:9.0  },
+  ];
+  state.artisans = [
+    { artisan_id:1, artisan_name:'أحمد بن يوسف',  region:'الجزائر العاصمة', specialty:'نسيج الزرابي',   total_evaluations:8,  avg_total:8.4, acceptance_rate_pct:87.5 },
+    { artisan_id:6, artisan_name:'سارة حمداني',   region:'الجزائر العاصمة', specialty:'نسيج الزرابي',   total_evaluations:5,  avg_total:8.9, acceptance_rate_pct:100  },
+    { artisan_id:3, artisan_name:'يوسف منصور',    region:'تلمسان',          specialty:'الجلود والمروكن', total_evaluations:6,  avg_total:8.1, acceptance_rate_pct:83.3 },
+    { artisan_id:2, artisan_name:'فاطمة الزهراء', region:'تيزي وزو',        specialty:'تطريز قبائلي',   total_evaluations:7,  avg_total:7.2, acceptance_rate_pct:57.1 },
+    { artisan_id:4, artisan_name:'خديجة ورزاق',   region:'غرداية',          specialty:'النحاسيات',       total_evaluations:4,  avg_total:6.8, acceptance_rate_pct:50.0 },
+    { artisan_id:5, artisan_name:'علي تامزالي',   region:'بجاية',           specialty:'الفخار التقليدي', total_evaluations:9,  avg_total:5.9, acceptance_rate_pct:33.3 },
+  ];
+  state.products = [
+    { product_id:1, artisan_id:1, artisan_name:'أحمد بن يوسف',  name:'زربية قبائلية تقليدية',  category:'زرابي',   price_dzd:45000, is_active:1, eval_count:3, last_status:'accepted' },
+    { product_id:2, artisan_id:1, artisan_name:'أحمد بن يوسف',  name:'زربية بألوان طبيعية',    category:'زرابي',   price_dzd:38000, is_active:1, eval_count:2, last_status:'conditional' },
+    { product_id:3, artisan_id:2, artisan_name:'فاطمة الزهراء', name:'تطريز على قفطان',         category:'ملابس',   price_dzd:12000, is_active:1, eval_count:2, last_status:'accepted' },
+    { product_id:4, artisan_id:4, artisan_name:'خديجة ورزاق',   name:'شمعدان نحاسي منقوش',     category:'منزلية',  price_dzd:8500,  is_active:1, eval_count:1, last_status:'conditional' },
+    { product_id:5, artisan_id:3, artisan_name:'يوسف منصور',    name:'حقيبة جلد مطرزة',        category:'حقائب',   price_dzd:22000, is_active:1, eval_count:2, last_status:'accepted' },
+    { product_id:6, artisan_id:5, artisan_name:'علي تامزالي',   name:'طاجين خزفي مزخرف',       category:'أواني',   price_dzd:6500,  is_active:1, eval_count:3, last_status:'rejected' },
+    { product_id:7, artisan_id:6, artisan_name:'سارة حمداني',   name:'زربية بالصوف الطبيعي',   category:'زرابي',   price_dzd:52000, is_active:1, eval_count:2, last_status:'accepted' },
+  ];
+  state.alerts = [
+    { alert_id:1, alert_type:'consecutive_rejection',  artisan_name:'علي تامزالي',  message:'3 رفضات متتالية — يُنصح بالتواصل وتقديم الدعم التقني' },
+    { alert_id:2, alert_type:'compliance_violation',   artisan_name:'خديجة ورزاق', message:'مشكلة امتثال في منتج الشمعدان النحاسي — يحتاج مراجعة' },
+    { alert_id:3, alert_type:'improvement_milestone',  artisan_name:'أحمد بن يوسف',message:'تحسّن ملحوظ في معيار قصة المنتج +1.5 نقطة خلال 3 أشهر' },
+  ];
+}
+
+async function loadDashboardData() {
+  try {
+    const [summary, trends, evals, artisans, alerts] = await Promise.all([
+      api('/dashboard/summary'),
+      api('/dashboard/trends?months=6'),
+      api('/evaluations?limit=10'),
+      api('/artisans'),
+      api('/alerts'),
+    ]);
+    state.summary     = summary;
+    state.trends      = trends;
+    state.evaluations = evals.data;
+    state.evalTotal   = evals.total;
+    state.artisans    = artisans;
+    state.alerts      = alerts;
+  } catch { loadDemoData(); }
+}
+
+// ===== App Shell =====
+function renderApp() {
+  const pages = [
+    { id:'dashboard', label:'لوحة التحكم',  icon:'◈' },
+    { id:'evaluations',label:'التقييمات',   icon:'✦' },
+    { id:'new-eval',   label:'تقييم جديد',  icon:'＋', roles:['admin','evaluator'] },
+    { id:'artisans',    label:'الحرفيون',    icon:'◉' },
+    { id:'new-artisan', label:'حرفي جديد',   icon:'＋', roles:['admin'], hidden:true },
+    { id:'products',    label:'المنتجات',    icon:'◫', roles:['admin','evaluator'] },
+    { id:'new-product', label:'منتج جديد',   icon:'＋', roles:['admin','evaluator'], hidden:true },
+    { id:'evaluators',  label:'المقيّمون',   icon:'◑', roles:['admin'] },
+    { id:'new-evaluator',label:'مقيّم جديد', icon:'＋', roles:['admin'], hidden:true },
+    { id:'reports',    label:'التقارير',    icon:'◧' },
+    { id:'alerts',     label:'التنبيهات',   icon:'◎', badge: state.alerts?.filter(a=>!a.is_resolved).length || 0 },
+  ];
+
+  const navItems = pages
+    .filter(p => !p.roles || p.roles.includes(state.userRole))
+    .filter(p => !p.hidden)
+    .map(p => `
+      <button class="nav-item ${state.page===p.id?'active':''}" data-page="${p.id}">
+        <span class="nav-icon">${p.icon}</span>
+        ${p.label}
+        ${p.badge ? `<span class="nav-badge">${p.badge}</span>` : ''}
+      </button>
+    `).join('');
+
+  const mobileNavItems = pages
+    .filter(p => !p.roles || p.roles.includes(state.userRole))
+    .filter(p => !p.hidden)
+    .map(p => `
+      <button class="mobile-nav-item ${state.page===p.id?'active':''}" data-page="${p.id}">
+        <span class="m-icon">${p.icon}</span>
+        <span class="m-label">${p.label}</span>
+        ${p.badge ? `<span class="m-badge">${p.badge}</span>` : ''}
+      </button>
+    `).join('');
+
+  const pageTitle = pages.find(p=>p.id===state.page)?.label || 'نظام التقييم';
+
+  return `
+<!-- Mobile Topbar -->
+<div class="mobile-topbar">
+  <div class="mobile-topbar-title">${pageTitle}</div>
+  <span class="mobile-topbar-code">CHAMBER-DZ-2025</span>
+  <button class="btn btn-logout" id="logout-btn-m" style="font-size:11px;padding:5px 10px;color:var(--c-coral);border-color:var(--c-coral-bg);background:var(--c-coral-bg);border-radius:6px;cursor:pointer;border:1px solid">خروج</button>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h2>نظام التقييم</h2>
+      <p>Desert Zone × الغرفة</p>
+    </div>
+    <nav>${navItems}</nav>
+    <div style="margin-top:auto;padding:16px 20px;border-top:1px solid var(--c-border)">
+      <div style="font-size:12px;font-weight:500">${state.userName||'المستخدم'}</div>
+      <div style="font-size:11px;color:var(--c-muted)">${state.userRole==='admin'?'مدير':state.userRole==='evaluator'?'مقيّم':'شريك'}</div>
+      <button class="btn" style="margin-top:8px;font-size:11px;padding:5px 10px" id="logout-btn">خروج</button>
+    </div>
+  </aside>
+  <main class="main">
+    ${renderPage()}
+  </main>
+</div>
+
+<!-- Mobile Bottom Nav -->
+<div class="mobile-bottom-nav">
+  <div class="mobile-nav-inner">${mobileNavItems}</div>
+</div>`;
+}
+
+function renderPage() {
+  switch (state.page) {
+    case 'dashboard':   return renderDashboard();
+    case 'evaluations': return renderEvaluations();
+    case 'new-eval':    return renderNewEval();
+    case 'artisans':     return renderArtisans();
+    case 'new-artisan':  return renderNewArtisan();
+    case 'products':     return renderProducts();
+    case 'new-product':  return renderNewProduct();
+    case 'evaluators':   return renderEvaluators();
+    case 'new-evaluator':return renderNewEvaluator();
+    case 'alerts':      return renderAlerts();
+    case 'reports':     return renderReports();
+    default:            return renderDashboard();
+  }
+}
+
+// ===== Dashboard =====
+function renderDashboard() {
+  const s = state.summary;
+  if (!s) return '<p>جار التحميل...</p>';
+  return `
+<div class="page-header">
+  <h1>لوحة التحكم</h1>
+  <p>الملخص التنفيذي — المعايير الأربعة</p>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-label">إجمالي التقييمات</div>
+    <div class="kpi-value">${s.total_evaluations}</div>
+    <div class="kpi-sub">${s.total_artisans} حرفي مسجل</div>
+  </div>
+  <div class="kpi-card kpi-teal">
+    <div class="kpi-label">نسبة القبول</div>
+    <div class="kpi-value">${s.acceptance_rate}%</div>
+    <div class="kpi-sub">${s.accepted} منتج مقبول</div>
+  </div>
+  <div class="kpi-card kpi-amber">
+    <div class="kpi-label">قبول مشروط</div>
+    <div class="kpi-value">${s.conditional}</div>
+    <div class="kpi-sub">تحتاج متابعة وتحسين</div>
+  </div>
+  <div class="kpi-card kpi-coral">
+    <div class="kpi-label">التنبيهات النشطة</div>
+    <div class="kpi-value">${s.unresolved_alerts}</div>
+    <div class="kpi-sub">${s.rejected} منتج مرفوض</div>
+  </div>
+</div>
+
+<div class="charts-row">
+  <div class="card">
+    <div class="card-title">المعايير الأربعة — متوسط عام</div>
+    <div class="radar-container"><canvas id="radarChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">اتجاه نسبة القبول — آخر 6 أشهر</div>
+    <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">آخر التقييمات</div>
+  ${renderEvalTable(state.evaluations.slice(0,5), true)}
+</div>`;
+}
+
+// ===== Evaluations Page =====
+function renderEvaluations() {
+  return `
+<div class="page-header">
+  <h1>التقييمات</h1>
+  <p>جميع التقييمات مع إمكانية الفلترة والبحث</p>
+</div>
+<div class="card">
+  <div class="filters-bar">
+    <select id="f-status" onchange="filterChange()">
+      <option value="">كل الحالات</option>
+      <option value="accepted">مقبول</option>
+      <option value="conditional">مشروط</option>
+      <option value="rejected">مرفوض</option>
+    </select>
+    <input type="text" id="f-search" placeholder="ابحث باسم الحرفي..." oninput="filterChange()" style="min-width:200px"/>
+    <button class="btn btn-primary" onclick="navigate('new-eval')">＋ تقييم جديد</button>
+  </div>
+  ${renderEvalTable(state.evaluations)}
+  <div class="pagination" id="pagination"></div>
+</div>`;
+}
+
+function renderEvalTable(rows, mini = false) {
+  const cols = mini
+    ? ['الحرفي', 'المنتج', 'النقاط', 'الحالة']
+    : ['التاريخ', 'الحرفي', 'المنطقة', 'المنتج', 'جودة', 'وفرة', 'قصة', 'امتثال', 'المجموع', 'الحالة'];
+
+  return `
+<div class="table-wrap">
+<table>
+  <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+  <tbody>
+    ${rows.map(e => mini ? `
+      <tr>
+        <td><strong>${e.artisan_name}</strong></td>
+        <td style="color:var(--c-muted)">${e.product_name}</td>
+        <td><strong style="color:var(--c-teal)">${e.total_score}</strong></td>
+        <td>${badge(e.status)}</td>
+      </tr>` : `
+      <tr>
+        <td style="color:var(--c-muted);font-size:12px">${e.eval_date}</td>
+        <td><strong>${e.artisan_name}</strong></td>
+        <td style="color:var(--c-muted)">${e.region}</td>
+        <td>${e.product_name}</td>
+        <td>${scoreCell(e.score_quality)}</td>
+        <td>${scoreCell(e.score_supply)}</td>
+        <td>${scoreCell(e.score_story)}</td>
+        <td>${scoreCell(e.score_compliance)}</td>
+        <td><strong style="color:var(--c-teal)">${e.total_score}</strong></td>
+        <td>${badge(e.status)}</td>
+      </tr>`).join('')}
+  </tbody>
+</table>
+</div>`;
+}
+
+function badge(status) {
+  const map = { accepted:'badge-accepted', rejected:'badge-rejected', conditional:'badge-conditional' };
+  const txt = { accepted:'مقبول', rejected:'مرفوض', conditional:'مشروط' };
+  return `<span class="badge ${map[status]||''}">${txt[status]||status}</span>`;
+}
+
+function scoreCell(v) {
+  const pct = Math.round(v*10);
+  const color = v>=8?'var(--c-teal)':v>=6?'var(--c-amber)':'var(--c-coral)';
+  return `<div class="score-bar">
+    <div class="score-track"><div class="score-fill" style="width:${pct}%;background:${color}"></div></div>
+    <span class="score-num">${v}</span>
+  </div>`;
+}
+
+// ===== New Evaluation Form =====
+function renderNewEval() {
+  const e = state.newEval;
+  const scores = [
+    { key:'score_quality',    label:'جودة الإنتاج والتشطيب' },
+    { key:'score_supply',     label:'الوفرة والتوريد والتغليف' },
+    { key:'score_story',      label:'قصة المنتج والهوية' },
+    { key:'score_compliance', label:'الامتثال — الملكية الفكرية' },
+  ];
+  return `
+<div class="page-header">
+  <h1>تقييم جديد</h1>
+  <p>إدخال نتائج لجنة التقييم المشتركة</p>
+</div>
+<div class="card">
+  <div class="form-grid">
+    <div class="form-group">
+      <label>الحرفي</label>
+      <select id="ne-artisan" onchange="loadArtisanProducts(this.value)">
+        <option value="">-- اختر الحرفي --</option>
+        ${state.artisans.map(a=>`<option value="${a.artisan_id}">${a.artisan_name} — ${a.region}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>المنتج</label>
+      <select id="ne-product">
+        <option value="">-- اختر المنتج --</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>المقيّم</label>
+      <select id="ne-evaluator">
+        <option value="1">سامية بن عيسى — الغرفة</option>
+        <option value="2">كريم طالبي — Desert Zone</option>
+        <option value="3">نادية حمداني — الغرفة</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>تاريخ التقييم</label>
+      <input type="date" id="ne-date" value="${new Date().toISOString().split('T')[0]}"/>
+    </div>
+  </div>
+
+  <div style="margin:20px 0 8px;font-size:12px;font-weight:600;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em">
+    النقاط — كل معيار من 0 إلى 10
+  </div>
+  <div class="score-input-row">
+    ${scores.map(s=>`
+    <div class="score-input-group">
+      <div class="score-input-label">
+        <span>${s.label}</span>
+        <strong id="sv-${s.key}">${e[s.key]}</strong>
+      </div>
+      <input type="range" min="0" max="10" step="0.5" value="${e[s.key]}"
+        oninput="updateScore('${s.key}',this.value)"/>
+    </div>`).join('')}
+  </div>
+
+  <div style="background:var(--c-bg);border-radius:8px;padding:14px;margin:14px 0;display:flex;gap:24px;align-items:center">
+    <div>
+      <div style="font-size:11px;color:var(--c-muted);margin-bottom:2px">المتوسط الحالي</div>
+      <div style="font-size:26px;font-weight:600;color:var(--c-teal)" id="avg-display">
+        ${((e.score_quality+e.score_supply+e.score_story+e.score_compliance)/4).toFixed(1)}
+      </div>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:11px;color:var(--c-muted);margin-bottom:6px">الحالة المقترحة</div>
+      <div style="display:flex;gap:8px">
+        ${['accepted','conditional','rejected'].map(st=>`
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
+          <input type="radio" name="ne-status" value="${st}" ${e.status===st?'checked':''}
+            onchange="state.newEval.status=this.value"/>
+          ${st==='accepted'?'مقبول':st==='conditional'?'مشروط':'مرفوض'}
+        </label>`).join('')}
+      </div>
+    </div>
+  </div>
+
+  <div class="form-grid">
+    <div class="form-group form-full">
+      <label>ملاحظات عامة</label>
+      <textarea id="ne-notes" placeholder="ملاحظات اللجنة حول المنتج..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>سبب الرفض (إن وُجد)</label>
+      <textarea id="ne-reject" rows="2" placeholder="سبب رفض المنتج أو تقييده..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>توصيات للتحسين</label>
+      <textarea id="ne-improve" rows="2" placeholder="ما الذي يجب على الحرفي تحسينه؟"></textarea>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="navigate('evaluations')">إلغاء</button>
+    <button class="btn btn-primary" id="save-eval-btn" onclick="saveEvaluation()">حفظ التقييم</button>
+  </div>
+</div>`;
+}
+
+function updateScore(key, val) {
+  state.newEval[key] = parseFloat(val);
+  const el = document.getElementById('sv-' + key);
+  if (el) el.textContent = val;
+  const avg = ((state.newEval.score_quality + state.newEval.score_supply +
+                state.newEval.score_story  + state.newEval.score_compliance) / 4).toFixed(1);
+  const el2 = document.getElementById('avg-display');
+  if (el2) el2.textContent = avg;
+}
+
+async function saveEvaluation() {
+  const btn = document.getElementById('save-eval-btn');
+  btn.disabled = true;
+  btn.textContent = 'جار الحفظ...';
+  const payload = {
+    product_id:    document.getElementById('ne-product')?.value,
+    evaluator_id:  document.getElementById('ne-evaluator')?.value,
+    score_quality:    state.newEval.score_quality,
+    score_supply:     state.newEval.score_supply,
+    score_story:      state.newEval.score_story,
+    score_compliance: state.newEval.score_compliance,
+    status:        state.newEval.status,
+    notes:         document.getElementById('ne-notes')?.value,
+    rejection_reason:  document.getElementById('ne-reject')?.value,
+    improvement_notes: document.getElementById('ne-improve')?.value,
+    eval_date:     document.getElementById('ne-date')?.value,
+  };
+  try {
+    await api('/evaluations', { method:'POST', body: JSON.stringify(payload) });
+    toast('تم حفظ التقييم بنجاح', 'success');
+    await loadDashboardData();
+  } catch {
+    // Demo mode: simulate save
+    const newRow = {
+      eval_id: state.evaluations.length + 1,
+      eval_date: payload.eval_date,
+      artisan_name: state.artisans.find(a=>a.artisan_id==document.getElementById('ne-artisan')?.value)?.artisan_name || 'حرفي جديد',
+      product_name: 'منتج جديد',
+      region: '—',
+      score_quality: payload.score_quality,
+      score_supply:  payload.score_supply,
+      score_story:   payload.score_story,
+      score_compliance: payload.score_compliance,
+      total_score: ((payload.score_quality+payload.score_supply+payload.score_story+payload.score_compliance)/4).toFixed(1),
+      status: payload.status,
+    };
+    state.evaluations.unshift(newRow);
+    state.summary.total_evaluations++;
+    toast('تم حفظ التقييم (وضع العرض التوضيحي)', 'success');
+  }
+  navigate('evaluations');
+}
+
+function loadArtisanProducts(artisanId, preselectId=null) {
+  const sel = document.getElementById('ne-product');
+  if (!sel) return;
+  const opts = state.products.filter(p=>p.artisan_id==artisanId);
+  sel.innerHTML = '<option value="">-- اختر المنتج --</option>' +
+    opts.map(p=>`<option value="${p.product_id}" ${p.product_id==preselectId?'selected':''}>${p.name}</option>`).join('');
+}
+
+// ===== Products Page =====
+function renderProducts() {
+  const cats = [...new Set(state.products.map(p=>p.category))];
+  return `
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+  <div>
+    <h1>المنتجات</h1>
+    <p>${state.products.length} منتج مسجل في النظام</p>
+  </div>
+  <button class="btn btn-primary" onclick="navigate('new-product')">＋ إضافة منتج</button>
+</div>
+<div class="card">
+  <div class="filters-bar">
+    <select id="fp-cat" onchange="renderProductsTable()">
+      <option value="">كل الفئات</option>
+      ${cats.map(c=>`<option value="${c}">${c}</option>`).join('')}
+    </select>
+    <select id="fp-artisan" onchange="renderProductsTable()">
+      <option value="">كل الحرفيين</option>
+      ${state.artisans.map(a=>`<option value="${a.artisan_id}">${a.artisan_name}</option>`).join('')}
+    </select>
+    <input type="text" id="fp-search" placeholder="ابحث باسم المنتج..." oninput="renderProductsTable()" style="min-width:180px"/>
+  </div>
+  <div id="products-table-wrap">
+    ${buildProductsTable(state.products)}
+  </div>
+</div>`;
+}
+
+function buildProductsTable(rows) {
+  if (!rows.length) return '<p style="text-align:center;color:var(--c-muted);padding:24px">لا توجد نتائج</p>';
+  const statusMap = { accepted:'badge-accepted', rejected:'badge-rejected', conditional:'badge-conditional' };
+  const statusTxt = { accepted:'مقبول', rejected:'مرفوض', conditional:'مشروط', null:'—' };
+  return `<div class="table-wrap"><table>
+  <thead><tr>
+    <th>#</th><th>اسم المنتج</th><th>الحرفي</th><th>الفئة</th>
+    <th>السعر (دج)</th><th>التقييمات</th><th>آخر حالة</th><th>إجراءات</th>
+  </tr></thead>
+  <tbody>
+  ${rows.map(p=>`
+    <tr>
+      <td style="color:var(--c-muted);font-size:12px">${p.product_id}</td>
+      <td><strong>${p.name}</strong></td>
+      <td style="color:var(--c-muted)">${p.artisan_name}</td>
+      <td><span class="badge" style="background:var(--c-bg);color:var(--c-muted)">${p.category}</span></td>
+      <td style="font-family:monospace">${p.price_dzd?.toLocaleString('ar-DZ')||'—'}</td>
+      <td style="text-align:center;color:var(--c-muted)">${p.eval_count||0}</td>
+      <td>${p.last_status?`<span class="badge ${statusMap[p.last_status]||''}">${statusTxt[p.last_status]}</span>`:'<span style="color:var(--c-muted);font-size:12px">لم يُقيَّم</span>'}</td>
+      <td>
+        <button class="btn" style="font-size:11px;padding:4px 10px" onclick="evalProduct(${p.product_id},${p.artisan_id})">تقييم</button>
+        <button class="btn" style="font-size:11px;padding:4px 10px;margin-right:4px;color:var(--c-coral);border-color:var(--c-coral-bg);background:var(--c-coral-bg)" onclick="confirmDelete('product',${p.product_id},'${p.name}')">حذف</button>
+      </td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function renderProductsTable() {
+  const cat    = document.getElementById('fp-cat')?.value;
+  const aid    = document.getElementById('fp-artisan')?.value;
+  const search = document.getElementById('fp-search')?.value?.toLowerCase()||'';
+  let rows = state.products;
+  if (cat)    rows = rows.filter(p=>p.category===cat);
+  if (aid)    rows = rows.filter(p=>p.artisan_id==aid);
+  if (search) rows = rows.filter(p=>p.name.toLowerCase().includes(search)||p.artisan_name.toLowerCase().includes(search));
+  document.getElementById('products-table-wrap').innerHTML = buildProductsTable(rows);
+}
+
+function evalProduct(productId, artisanId) {
+  state.newEval = { artisan_id:artisanId, product_id:productId, score_quality:7, score_supply:7, score_story:7, score_compliance:7, status:'accepted', notes:'', rejection_reason:'', improvement_notes:'' };
+  navigate('new-eval');
+  setTimeout(()=>{
+    const sel = document.getElementById('ne-artisan');
+    if (sel) { sel.value = artisanId; loadArtisanProducts(artisanId, productId); }
+  }, 50);
+}
+
+// ===== Confirm Delete Modal =====
+function confirmDelete(type, id, name) {
+  // Remove existing modal if any
+  document.getElementById('confirm-modal')?.remove();
+  const isArtisan = type === 'artisan';
+  const productCount = isArtisan ? state.products.filter(p=>p.artisan_id==id).length : 0;
+  const warning = isArtisan && productCount > 0
+    ? `<div style="background:var(--c-amber-bg);border-radius:8px;padding:10px 12px;margin:12px 0;font-size:12px;color:var(--c-amber)">
+        ⚠️ سيتم حذف <strong>${productCount} منتج</strong> مرتبط بهذا الحرفي أيضاً.
+      </div>` : '';
+  const modal = document.createElement('div');
+  modal.id = 'confirm-modal';
+  modal.innerHTML = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px">
+      <div style="background:var(--c-surface);border-radius:14px;padding:28px 24px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,0.18)">
+        <div style="font-size:32px;text-align:center;margin-bottom:12px">🗑️</div>
+        <div style="font-size:15px;font-weight:600;text-align:center;margin-bottom:6px">تأكيد الحذف</div>
+        <div style="font-size:13px;color:var(--c-muted);text-align:center;margin-bottom:4px">
+          هل أنت متأكد من حذف ${isArtisan ? 'الحرفي' : 'المنتج'}
+        </div>
+        <div style="font-size:14px;font-weight:600;text-align:center;color:var(--c-text);margin-bottom:4px">${name}؟</div>
+        <div style="font-size:11px;color:var(--c-coral);text-align:center">لا يمكن التراجع عن هذا الإجراء</div>
+        ${warning}
+        <div style="display:flex;gap:10px;margin-top:20px">
+          <button onclick="document.getElementById('confirm-modal').remove()"
+            style="flex:1;padding:11px;border-radius:8px;border:1px solid var(--c-border);background:var(--c-surface);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
+            إلغاء
+          </button>
+          <button onclick="executeDelete('${type}',${id});document.getElementById('confirm-modal').remove()"
+            style="flex:1;padding:11px;border-radius:8px;border:none;background:var(--c-coral);color:white;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
+            نعم، احذف
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  // Close on backdrop click
+  modal.firstElementChild.addEventListener('click', e => { if (e.target === e.currentTarget) modal.remove(); });
+}
+
+function executeDelete(type, id) {
+  if (type === 'product') {
+    state.products = state.products.filter(p=>p.product_id!==id);
+    try { api('/products/'+id, { method:'DELETE' }); } catch {}
+    toast('تم حذف المنتج بنجاح', 'success');
+    navigate('products');
+  } else if (type === 'artisan') {
+    const productsBefore = state.products.length;
+    state.products = state.products.filter(p=>p.artisan_id!==id);
+    state.artisans  = state.artisans.filter(a=>a.artisan_id!==id);
+    state.summary.total_artisans = Math.max(0, (state.summary.total_artisans||0)-1);
+    try { api('/artisans/'+id, { method:'DELETE' }); } catch {}
+    toast('تم حذف الحرفي وجميع منتجاته', 'success');
+    navigate('artisans');
+  }
+}
+
+// ===== New Product Form =====
+function renderNewProduct() {
+  const categories = ['زرابي','ملابس','حقائب','منزلية','أواني','مجوهرات','خشب','نسيج','جلود','معادن','أخرى'];
+  return `
+<div class="page-header">
+  <h1>إضافة منتج جديد</h1>
+  <p>تسجيل منتج حرفي في قاعدة البيانات</p>
+</div>
+<div class="card" style="max-width:680px">
+  <div class="form-grid">
+    <div class="form-group">
+      <label>الحرفي <span style="color:var(--c-coral)">*</span></label>
+      <select id="np-artisan" required>
+        <option value="">-- اختر الحرفي --</option>
+        ${state.artisans.map(a=>`<option value="${a.artisan_id}">${a.artisan_name} — ${a.region}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>اسم المنتج <span style="color:var(--c-coral)">*</span></label>
+      <input type="text" id="np-name" placeholder="مثال: زربية قبائلية بالصوف الطبيعي" required/>
+    </div>
+    <div class="form-group">
+      <label>فئة المنتج <span style="color:var(--c-coral)">*</span></label>
+      <select id="np-category">
+        <option value="">-- اختر الفئة --</option>
+        ${categories.map(c=>`<option value="${c}">${c}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>السعر بالدينار الجزائري</label>
+      <input type="number" id="np-price" placeholder="مثال: 45000" min="0" step="500"/>
+    </div>
+    <div class="form-group form-full">
+      <label>وصف المنتج</label>
+      <textarea id="np-desc" rows="3" placeholder="وصف مختصر للمنتج، موارده، أسلوب الصنع..."></textarea>
+    </div>
+    <div class="form-group form-full">
+      <label>رابط صورة المنتج</label>
+      <input type="url" id="np-photo" placeholder="https://..."/>
+    </div>
+  </div>
+
+  <div style="background:var(--c-teal-bg);border-radius:8px;padding:12px 14px;margin:16px 0;font-size:12px;color:var(--c-teal)">
+    <strong>ملاحظة:</strong> بعد إضافة المنتج يمكنك الانتقال مباشرة إلى تقييمه من صفحة المنتجات.
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="navigate('products')">إلغاء</button>
+    <button class="btn btn-primary" onclick="saveProduct()">حفظ المنتج</button>
+  </div>
+</div>`;
+}
+
+function saveProduct() {
+  const artisan_id = document.getElementById('np-artisan')?.value;
+  const name       = document.getElementById('np-name')?.value?.trim();
+  const category   = document.getElementById('np-category')?.value;
+  const price      = parseFloat(document.getElementById('np-price')?.value)||null;
+  const desc       = document.getElementById('np-desc')?.value?.trim();
+
+  if (!artisan_id) { toast('اختر الحرفي أولاً', 'error'); return; }
+  if (!name)       { toast('أدخل اسم المنتج', 'error'); return; }
+  if (!category)   { toast('اختر فئة المنتج', 'error'); return; }
+
+  const artisan = state.artisans.find(a=>a.artisan_id==artisan_id);
+  const newProduct = {
+    product_id:   state.products.length + 1,
+    artisan_id:   parseInt(artisan_id),
+    artisan_name: artisan?.artisan_name || '—',
+    name, category,
+    price_dzd:    price,
+    description:  desc,
+    is_active:    1,
+    eval_count:   0,
+    last_status:  null,
+  };
+  state.products.unshift(newProduct);
+
+  try {
+    api('/products', { method:'POST', body: JSON.stringify({ artisan_id, name, category, price_dzd:price, description:desc }) });
+  } catch {}
+
+  toast('تم إضافة المنتج بنجاح', 'success');
+  navigate('products');
+}
+
+// ===== Artisans Page =====
+function renderArtisans() {
+  const searchVal = state.artisanSearch || '';
+  const filtered = state.artisans.filter(a =>
+    !searchVal || a.artisan_name.includes(searchVal) || a.region.includes(searchVal) || a.specialty.includes(searchVal)
+  );
+  return `
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+  <div>
+    <h1>الحرفيون</h1>
+    <p>${state.artisans.length} حرفي مسجل — مرتب حسب الأداء</p>
+  </div>
+  ${state.userRole==='admin' ? `<button class="btn btn-primary" onclick="navigate('new-artisan')">＋ إضافة حرفي</button>` : ''}
+</div>
+<div class="card">
+  <div class="filters-bar">
+    <input type="text" placeholder="ابحث بالاسم أو المنطقة..." oninput="state.artisanSearch=this.value;renderArtisansTable()" value="${searchVal}" style="min-width:200px"/>
+  </div>
+  <div id="artisans-table-wrap">
+    ${buildArtisansTable(filtered)}
+  </div>
+</div>`;
+}
+
+function buildArtisansTable(rows) {
+  if (!rows.length) return '<p style="text-align:center;color:var(--c-muted);padding:24px">لا توجد نتائج</p>';
+  const canDelete = state.userRole === 'admin';
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>#</th><th>الحرفي</th><th>المنطقة</th><th>التخصص</th>
+      <th>تقييمات</th><th>المتوسط</th><th>نسبة القبول</th><th>الحالة</th>
+      ${canDelete ? '<th>إجراءات</th>' : ''}
+    </tr></thead>
+    <tbody>
+    ${rows.map((a,i) => `
+      <tr>
+        <td style="color:var(--c-muted)">${i+1}</td>
+        <td><strong>${a.artisan_name}</strong></td>
+        <td>${a.region}</td>
+        <td>${a.specialty}</td>
+        <td style="text-align:center">${a.total_evaluations}</td>
+        <td>${scoreCell(a.avg_total)}</td>
+        <td>
+          <div class="score-bar">
+            <div class="score-track">
+              <div class="score-fill" style="width:${a.acceptance_rate_pct}%;background:${a.acceptance_rate_pct>=70?'var(--c-teal)':a.acceptance_rate_pct>=50?'var(--c-amber)':'var(--c-coral)'}"></div>
+            </div>
+            <span class="score-num">${a.acceptance_rate_pct}%</span>
+          </div>
+        </td>
+        <td>${a.acceptance_rate_pct>=70?'<span class="badge badge-accepted">ممتاز</span>':a.acceptance_rate_pct>=50?'<span class="badge badge-conditional">متوسط</span>':'<span class="badge badge-rejected">يحتاج دعم</span>'}</td>
+        ${canDelete ? `<td>
+          <button class="btn" style="font-size:11px;padding:4px 10px" onclick="navigate('new-product');setTimeout(()=>{document.getElementById('np-artisan').value=${a.artisan_id}},50)">منتج</button>
+          <button class="btn" style="font-size:11px;padding:4px 10px;margin-right:4px;color:var(--c-coral);border-color:var(--c-coral-bg);background:var(--c-coral-bg)" onclick="confirmDelete('artisan',${a.artisan_id},'${a.artisan_name}')">حذف</button>
+        </td>` : ''}
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function renderArtisansTable() {
+  const search = state.artisanSearch || '';
+  const rows = state.artisans.filter(a =>
+    !search || a.artisan_name.includes(search) || a.region.includes(search) || a.specialty.includes(search)
+  );
+  document.getElementById('artisans-table-wrap').innerHTML = buildArtisansTable(rows);
+}
+
+// ===== New Artisan Form =====
+function renderNewArtisan() {
+  const specialties = [
+    { id:1, name:'نسيج الزرابي',     cat:'نسيج' },
+    { id:2, name:'الفخار التقليدي',  cat:'خزف' },
+    { id:3, name:'تطريز قبائلي',     cat:'نسيج' },
+    { id:4, name:'الجلود والمروكن',  cat:'جلود' },
+    { id:5, name:'النحاسيات',        cat:'معادن' },
+    { id:6, name:'الحلي الأمازيغية', cat:'مجوهرات' },
+    { id:7, name:'الخشب المنحوت',    cat:'خشب' },
+  ];
+  const regions = [
+    { id:1, name:'الجزائر العاصمة' },
+    { id:2, name:'تيزي وزو' },
+    { id:3, name:'بجاية' },
+    { id:4, name:'غرداية' },
+    { id:5, name:'تمنراست' },
+    { id:6, name:'تلمسان' },
+  ];
+  return `
+<div class="page-header">
+  <h1>إضافة حرفي جديد</h1>
+  <p>تسجيل بيانات حرفي في قاعدة البيانات</p>
+</div>
+<div class="card" style="max-width:720px">
+
+  <div style="font-size:12px;font-weight:600;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">
+    البيانات الشخصية
+  </div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>الاسم الكامل <span style="color:var(--c-coral)">*</span></label>
+      <input type="text" id="na-name" placeholder="مثال: أحمد بن يوسف"/>
+    </div>
+    <div class="form-group">
+      <label>رقم الهاتف</label>
+      <input type="tel" id="na-phone" placeholder="0550 123 456" dir="ltr"/>
+    </div>
+    <div class="form-group">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="na-email" placeholder="artisan@example.dz" dir="ltr"/>
+    </div>
+    <div class="form-group">
+      <label>رقم البطاقة الوطنية</label>
+      <input type="text" id="na-nid" placeholder="123456789012345" dir="ltr" maxlength="18"/>
+    </div>
+  </div>
+
+  <div style="font-size:12px;font-weight:600;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 12px">
+    البيانات المهنية
+  </div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>المنطقة <span style="color:var(--c-coral)">*</span></label>
+      <select id="na-region">
+        <option value="">-- اختر المنطقة --</option>
+        ${regions.map(r=>`<option value="${r.id}">${r.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>التخصص الحرفي <span style="color:var(--c-coral)">*</span></label>
+      <select id="na-specialty">
+        <option value="">-- اختر التخصص --</option>
+        ${specialties.map(s=>`<option value="${s.id}">${s.name} — ${s.cat}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>رقم التسجيل في الغرفة</label>
+      <input type="text" id="na-regno" placeholder="CH-2025-XXX" dir="ltr"/>
+    </div>
+    <div class="form-group">
+      <label>الحالة</label>
+      <select id="na-active">
+        <option value="1">نشط</option>
+        <option value="0">غير نشط</option>
+      </select>
+    </div>
+    <div class="form-group form-full">
+      <label>ملاحظات</label>
+      <textarea id="na-notes" rows="3" placeholder="معلومات إضافية عن الحرفي، سنوات الخبرة، الجوائز..."></textarea>
+    </div>
+  </div>
+
+  <div style="background:var(--c-teal-bg);border-radius:8px;padding:12px 14px;margin:16px 0;font-size:12px;color:var(--c-teal)">
+    <strong>بعد التسجيل:</strong> يمكنك إضافة منتجاته من صفحة المنتجات ثم البدء بتقييمها.
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="navigate('artisans')">إلغاء</button>
+    <button class="btn btn-primary" onclick="saveArtisan()">حفظ الحرفي</button>
+  </div>
+</div>`;
+}
+
+function saveArtisan() {
+  const name      = document.getElementById('na-name')?.value?.trim();
+  const region_id = document.getElementById('na-region')?.value;
+  const spec_id   = document.getElementById('na-specialty')?.value;
+  const phone     = document.getElementById('na-phone')?.value?.trim();
+  const email     = document.getElementById('na-email')?.value?.trim();
+  const nid       = document.getElementById('na-nid')?.value?.trim();
+  const regno     = document.getElementById('na-regno')?.value?.trim();
+  const is_active = document.getElementById('na-active')?.value;
+  const notes     = document.getElementById('na-notes')?.value?.trim();
+
+  if (!name)      { toast('أدخل اسم الحرفي', 'error'); return; }
+  if (!region_id) { toast('اختر المنطقة', 'error'); return; }
+  if (!spec_id)   { toast('اختر التخصص الحرفي', 'error'); return; }
+
+  const regions = {1:'الجزائر العاصمة',2:'تيزي وزو',3:'بجاية',4:'غرداية',5:'تمنراست',6:'تلمسان'};
+  const specs   = {1:'نسيج الزرابي',2:'الفخار التقليدي',3:'تطريز قبائلي',4:'الجلود والمروكن',5:'النحاسيات',6:'الحلي الأمازيغية',7:'الخشب المنحوت'};
+
+  const newArtisan = {
+    artisan_id:          state.artisans.length + 10,
+    artisan_name:        name,
+    region:              regions[region_id] || '—',
+    specialty:           specs[spec_id] || '—',
+    phone, email,
+    registration_no:     regno || `CH-2025-${String(state.artisans.length+1).padStart(3,'0')}`,
+    is_active:           parseInt(is_active),
+    total_evaluations:   0,
+    avg_total:           0,
+    avg_quality:         0,
+    avg_supply:          0,
+    avg_story:           0,
+    avg_compliance:      0,
+    acceptance_rate_pct: 0,
+    last_eval_date:      null,
+  };
+  state.artisans.push(newArtisan);
+  state.summary.total_artisans = (state.summary.total_artisans||0) + 1;
+
+  try {
+    api('/artisans', { method:'POST', body: JSON.stringify({ name, region_id, specialty_id:spec_id, phone, email, national_id:nid, registration_no:regno, is_active, notes }) });
+  } catch {}
+
+  toast('تم تسجيل الحرفي بنجاح', 'success');
+  navigate('artisans');
+}
+
+// ===== Evaluators Page =====
+function renderEvaluators() {
+  const orgLabel = { chamber:'الغرفة', desert_zone:'Desert Zone', external:'خارجي' };
+  const orgColor = { chamber:'badge-accepted', desert_zone:'badge-conditional', external:'' };
+  return `
+<div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+  <div>
+    <h1>المقيّمون</h1>
+    <p>${state.evaluators_list.length} مقيّم مسجل — لجنة التقييم المشتركة</p>
+  </div>
+  <button class="btn btn-primary" onclick="navigate('new-evaluator')">＋ إضافة مقيّم</button>
+</div>
+<div class="card">
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th>#</th><th>الاسم الكامل</th><th>الجهة</th><th>البريد الإلكتروني</th>
+      <th>التقييمات</th><th>الحالة</th><th>بيانات الدخول</th><th>إجراءات</th>
+    </tr></thead>
+    <tbody>
+    ${state.evaluators_list.map((ev,i) => {
+      const demoUser = state.demo_users.find(u => u.email === ev.email);
+      return `
+      <tr>
+        <td style="color:var(--c-muted);font-size:12px">${ev.id}</td>
+        <td><strong>${ev.name}</strong></td>
+        <td><span class="badge ${orgColor[ev.org]||''}">${orgLabel[ev.org]||ev.org}</span></td>
+        <td style="font-size:12px;direction:ltr;color:var(--c-muted)">${ev.email}</td>
+        <td style="text-align:center">${ev.eval_count||0}</td>
+        <td>${ev.is_active
+          ? '<span class="badge badge-accepted">نشط</span>'
+          : '<span class="badge badge-rejected">معطّل</span>'}</td>
+        <td>
+          ${demoUser
+            ? `<span style="font-size:11px;background:var(--c-bg);padding:3px 8px;border-radius:4px;direction:ltr;font-family:monospace">${demoUser.password}</span>`
+            : '<span style="color:var(--c-muted);font-size:11px">—</span>'}
+        </td>
+        <td style="display:flex;gap:6px">
+          <button class="btn" style="font-size:11px;padding:4px 10px" onclick="toggleEvaluator(${ev.id})">
+            ${ev.is_active ? 'تعطيل' : 'تفعيل'}
+          </button>
+          <button class="btn" style="font-size:11px;padding:4px 10px;color:var(--c-coral);border-color:var(--c-coral-bg)"
+            onclick="deleteEvaluator(${ev.id})">حذف</button>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="card-title">كيفية دخول المقيّمين</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+    <div style="background:var(--c-bg);border-radius:8px;padding:12px 14px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">الرابط</div>
+      <div style="font-size:12px;color:var(--c-muted);direction:ltr">http://localhost → افتح index.html</div>
+    </div>
+    <div style="background:var(--c-teal-bg);border-radius:8px;padding:12px 14px">
+      <div style="font-size:12px;font-weight:600;color:var(--c-teal);margin-bottom:6px">كود الغرفة</div>
+      <div style="font-size:14px;font-weight:600;direction:ltr;font-family:monospace;color:var(--c-teal)">CHAMBER-DZ-2025</div>
+    </div>
+  </div>
+  <p style="font-size:12px;color:var(--c-muted);margin-top:10px">
+    أرسل للمقيّم: بريده الإلكتروني + كلمة المرور + كود الغرفة. يدخل بالبريد وكلمة المرور ويرى فقط صلاحيات المقيّم.
+  </p>
+</div>`;
+}
+
+function toggleEvaluator(id) {
+  const ev = state.evaluators_list.find(e=>e.id===id);
+  if (!ev) return;
+  ev.is_active = ev.is_active ? 0 : 1;
+  const u = state.demo_users.find(u=>u.email===ev.email);
+  toast(ev.is_active ? 'تم تفعيل المقيّم' : 'تم تعطيل المقيّم', 'success');
+  navigate('evaluators');
+}
+
+function deleteEvaluator(id) {
+  if (!confirm('حذف هذا المقيّم؟')) return;
+  const ev = state.evaluators_list.find(e=>e.id===id);
+  state.evaluators_list = state.evaluators_list.filter(e=>e.id!==id);
+  if (ev) state.demo_users = state.demo_users.filter(u=>u.email!==ev.email);
+  toast('تم حذف المقيّم', 'success');
+  navigate('evaluators');
+}
+
+// ===== New Evaluator Form =====
+function renderNewEvaluator() {
+  return `
+<div class="page-header">
+  <h1>إضافة مقيّم جديد</h1>
+  <p>تسجيل عضو جديد في لجنة التقييم</p>
+</div>
+<div class="card" style="max-width:680px">
+
+  <div style="font-size:12px;font-weight:600;color:var(--c-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px">
+    بيانات المقيّم
+  </div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>الاسم الكامل <span style="color:var(--c-coral)">*</span></label>
+      <input type="text" id="nev-name" placeholder="مثال: سامية بن عيسى"/>
+    </div>
+    <div class="form-group">
+      <label>الجهة المنتمية <span style="color:var(--c-coral)">*</span></label>
+      <select id="nev-org">
+        <option value="chamber">الغرفة الوطنية للصناعة التقليدية</option>
+        <option value="desert_zone">Desert Zone</option>
+        <option value="external">خبير خارجي</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>البريد الإلكتروني <span style="color:var(--c-coral)">*</span></label>
+      <input type="email" id="nev-email" placeholder="evaluator@chamber.dz" dir="ltr"/>
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور <span style="color:var(--c-coral)">*</span></label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="nev-pass" placeholder="أدخل كلمة مرور أو اضغط توليد" dir="ltr" style="flex:1"/>
+        <button class="btn" onclick="genPass()" style="white-space:nowrap;flex-shrink:0">توليد</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--c-amber-bg);border-radius:8px;padding:12px 14px;margin:16px 0;font-size:12px;color:var(--c-amber)">
+    <strong>تذكير:</strong> احتفظ بكلمة المرور وأرسلها للمقيّم مع كود الغرفة <strong>CHAMBER-DZ-2025</strong>. لا يمكن استرجاعها لاحقاً من الواجهة.
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="navigate('evaluators')">إلغاء</button>
+    <button class="btn btn-primary" onclick="saveEvaluator()">حفظ وإضافة</button>
+  </div>
+</div>`;
+}
+
+function genPass() {
+  const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  const pass = Array.from({length:8}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  document.getElementById('nev-pass').value = pass;
+}
+
+function saveEvaluator() {
+  const name  = document.getElementById('nev-name')?.value?.trim();
+  const org   = document.getElementById('nev-org')?.value;
+  const email = document.getElementById('nev-email')?.value?.trim().toLowerCase();
+  const pass  = document.getElementById('nev-pass')?.value?.trim();
+
+  if (!name)  { toast('أدخل اسم المقيّم', 'error'); return; }
+  if (!email) { toast('أدخل البريد الإلكتروني', 'error'); return; }
+  if (!pass || pass.length < 6) { toast('كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'error'); return; }
+  if (state.demo_users.find(u=>u.email===email)) { toast('هذا البريد مسجل مسبقاً', 'error'); return; }
+
+  const newId = Math.max(...state.evaluators_list.map(e=>e.id), 0) + 1;
+  state.evaluators_list.push({ id:newId, name, org, email, is_active:1, eval_count:0 });
+  state.demo_users.push({ id: state.demo_users.length+1, name, email, password:pass, role:'evaluator' });
+
+  try {
+    api('/evaluators', { method:'POST', body: JSON.stringify({ full_name:name, organization:org, email }) });
+    api('/users',      { method:'POST', body: JSON.stringify({ username:name, email, password:pass, role:'evaluator' }) });
+  } catch {}
+
+  toast(`تم إضافة ${name} — كلمة المرور: ${pass}`, 'success');
+  navigate('evaluators');
+}
+
+// ===== Alerts Page =====
+function renderAlerts() {
+  const icons = { consecutive_rejection:'⚠', compliance_violation:'🚫', improvement_milestone:'✓', supply_drop:'↓' };
+  const types = { consecutive_rejection:'warning', compliance_violation:'danger', improvement_milestone:'', supply_drop:'warning' };
+  return `
+<div class="page-header">
+  <h1>التنبيهات</h1>
+  <p>${state.alerts.length} تنبيه نشط يتطلب متابعة</p>
+</div>
+<div class="card">
+  ${state.alerts.map(a => `
+    <div class="alert-item ${types[a.alert_type]||'warning'}">
+      <span class="alert-icon">${icons[a.alert_type]||'!'}</span>
+      <div class="alert-text">
+        <strong>${a.artisan_name}</strong>
+        <p>${a.message}</p>
+      </div>
+      <button class="btn" style="font-size:11px;padding:4px 10px;margin-right:auto" onclick="resolveAlert(${a.alert_id})">
+        تم الحل
+      </button>
+    </div>`).join('')}
+  ${state.alerts.length===0 ? '<p style="text-align:center;color:var(--c-muted);padding:24px">لا توجد تنبيهات نشطة</p>' : ''}
+</div>`;
+}
+
+function resolveAlert(id) {
+  state.alerts = state.alerts.filter(a => a.alert_id !== id);
+  toast('تم حل التنبيه', 'success');
+  render();
+}
+
+// ===== Reports Page =====
+function renderReports() {
+  const s = state.summary;
+  return `
+<div class="page-header">
+  <h1>التقارير</h1>
+  <p>تقارير دورية جاهزة للتصدير</p>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div class="card">
+    <div class="card-title">توزيع الحالات</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="pieChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">أضعف المعايير</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:8px">
+      ${[
+        {label:'جودة الإنتاج',   val:s?.avg_quality   ||7.8},
+        {label:'الوفرة والتوريد',val:s?.avg_supply    ||6.9},
+        {label:'قصة المنتج',     val:s?.avg_story     ||8.1},
+        {label:'الامتثال',       val:s?.avg_compliance||9.2},
+      ].map(r=>`
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:13px">${r.label}</span>
+            <strong style="font-size:13px;color:${r.val>=8?'var(--c-teal)':r.val>=6.5?'var(--c-amber)':'var(--c-coral)'}">${r.val}/10</strong>
+          </div>
+          <div class="score-track" style="height:8px">
+            <div class="score-fill" style="width:${r.val*10}%;background:${r.val>=8?'var(--c-teal)':r.val>=6.5?'var(--c-amber)':'var(--c-coral)'}"></div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>
+</div>
+<div class="card" style="margin-top:16px">
+  <div class="card-title">تصدير التقارير</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+    <button class="btn" onclick="toast('جار التصدير...','success')">تقرير أسبوعي — PDF</button>
+    <button class="btn" onclick="toast('جار التصدير...','success')">تقرير شهري — Excel</button>
+    <button class="btn" onclick="toast('جار التصدير...','success')">تقرير ربع سنوي — PDF</button>
+    <button class="btn" onclick="toast('جار التصدير...','success')">بيانات الحرفيين — CSV</button>
+  </div>
+</div>`;
+}
+
+// ===== Charts =====
+function renderActiveChart() {
+  requestAnimationFrame(() => {
+    if (state.page === 'dashboard') {
+      drawRadar();
+      drawTrend();
+    }
+    if (state.page === 'reports') drawPie();
+  });
+}
+
+function drawRadar() {
+  const el = document.getElementById('radarChart');
+  if (!el) return;
+  const s = state.summary;
+  new Chart(el, {
+    type: 'radar',
+    data: {
+      labels: ['جودة الإنتاج', 'الوفرة والتوريد', 'قصة المنتج', 'الامتثال'],
+      datasets: [{
+        data: [s.avg_quality, s.avg_supply, s.avg_story, s.avg_compliance],
+        backgroundColor: 'rgba(29,158,117,0.15)',
+        borderColor:     '#1D9E75',
+        pointBackgroundColor: '#1D9E75',
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      scales: { r: { min:0, max:10, ticks:{ stepSize:2, font:{size:10} }, pointLabels:{ font:{size:11} } } },
+      plugins: { legend:{ display:false } },
+    },
+  });
+}
+
+function drawTrend() {
+  const el = document.getElementById('trendChart');
+  if (!el) return;
+  const T = state.trends;
+  new Chart(el, {
+    type: 'line',
+    data: {
+      labels: T.map(t => t.month),
+      datasets: [{
+        label: 'نسبة القبول %',
+        data: T.map(t => t.acceptance_rate_pct),
+        borderColor: '#1D9E75',
+        backgroundColor: 'rgba(29,158,117,0.08)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: '#1D9E75',
+      }],
+    },
+    options: {
+      scales: {
+        y: { min:40, max:100, ticks:{ callback:v=>v+'%', font:{size:10} } },
+        x: { ticks:{ font:{size:10} } },
+      },
+      plugins: { legend:{ display:false } },
+    },
+  });
+}
+
+function drawPie() {
+  const el = document.getElementById('pieChart');
+  if (!el) return;
+  const s = state.summary;
+  new Chart(el, {
+    type: 'doughnut',
+    data: {
+      labels: ['مقبول','مشروط','مرفوض'],
+      datasets: [{
+        data: [s.accepted, s.conditional, s.rejected],
+        backgroundColor: ['#1D9E75','#BA7517','#993C1D'],
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      cutout: '65%',
+      plugins: { legend:{ position:'bottom', labels:{ font:{size:11}, padding:14 } } },
+    },
+  });
+}
+
+// ===== Navigation =====
+function navigate(page) {
+  state.page = page;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function filterChange() {
+  const status = document.getElementById('f-status')?.value || '';
+  const search = document.getElementById('f-search')?.value?.toLowerCase() || '';
+  // Demo filter
+  let rows = state.evaluations;
+  // (In real app: re-fetch from API with params)
+  render();
+}
+
+function bindNav() {
+  document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => navigate(btn.dataset.page));
+  });
+  document.getElementById('logout-btn')?.addEventListener('click', () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userRole');
+    state.token = null;
+    state.page = 'login';
+    render();
+  });
+}
+
+// ===== Init =====
+loadDemoData(); // دائماً نُهيّئ البيانات التجريبية أولاً (بما فيها demo_users للدخول)
+if (state.token) {
+  state.page = 'dashboard';
+}
+render();
+</script>
+</body>
+</html>
